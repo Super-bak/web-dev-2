@@ -1,102 +1,101 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
+import Navbar from "./Navbar"; 
 
-const PostPage = () => {
-  const [posts, setPosts] = useState([]);
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [loading, setLoading] = useState(true);
-  const token = localStorage.getItem("authToken"); 
-  const fetchPosts = async () => {
-    try {
-      const response = await fetch("http://localhost:3000/posts");
-      if (!response.ok) {
-        throw new Error("Failed to fetch posts");
-      }
-      const data = await response.json();
-      setPosts(data);
-    } catch (error) {
-      console.error(error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+const SignupForm = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState(""); 
+  const [success, setSuccess] = useState("");
 
-  const handleCreatePost = async (e) => {
-    e.preventDefault();
-    if (!token) {
-      alert("You must be logged in to create a post.");
+  function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  }
+
+  function isValidPassword(password) {
+    return password.length >= 9;
+  }
+
+  const handleSignup = async (e) => {
+    e.preventDefault(); 
+    setError("");
+    setSuccess("");
+
+    if (!isValidEmail(email)) {
+      setError("Please enter a valid email.");
       return;
     }
 
+    if (!isValidPassword(password)) {
+      setError("Password must be at least 9 characters long.");
+      return;
+    }
+    
     try {
-      const response = await fetch("http://localhost:3000/posts", {
+      const response = await fetch("http://localhost:3000/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ title, content }),
-      });
 
-      if (response.ok) {
-        alert("Post created successfully!");
-        setTitle("");
-        setContent("");
-        fetchPosts(); 
-      } else {
-        throw new Error("Failed to create post");
+        body: JSON.stringify({ email, password }),
+      });
+      console.log("A registration is made email: " + email);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Signup failed. Please try again.");
       }
-    } catch (error) {
-      console.error(error.message);
+
+      setSuccess("Signup successful!");
+      setEmail("");
+      setPassword("");
+    } catch (err) {
+      setError(err.message);
     }
   };
 
-  useEffect(() => {
-    fetchPosts();
-  }, []);
-
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Posts</h1>
+    <>
+      <Navbar />
+      <main className="flex justify-center items-center h-screen" style={{ backgroundColor: '#B2EBF2' }}>
+        <div className="w-[300px] border border-gray-300 rounded-lg p-4 bg-white shadow-md">
 
-      <form onSubmit={handleCreatePost} className="mb-6">
-        <input
-          type="text"
-          placeholder="Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="border p-2 w-full mb-2"
-          required
-        />
-        <textarea
-          placeholder="Content"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          className="border p-2 w-full mb-2"
-          required
-        ></textarea>
-        <button
-          type="submit"
-          className="bg-blue-500 text-white px-4 py-2 rounded"
-        >
-          Create Post
-        </button>
-      </form>
+          <label htmlFor="email" className="block font-medium text-gray-700">Email</label>
+          <input
+            type="email"
+            id="email"
+            className="w-[90%] h-[30px] mb-2 px-2 border border-gray-300 rounded-lg focus:outline-none text-black transition duration-300 ease-in-out hover:border-[#007BA7]"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
 
-      {loading ? (
-        <p>Loading posts...</p>
-      ) : (
-        <ul>
-          {posts.map((post) => (
-            <li key={post.id} className="border-b p-2">
-              <h2 className="text-lg font-bold">{post.title}</h2>
-              <p>{post.content}</p>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+          <label htmlFor="password" className="block font-medium text-gray-700">Password</label>
+          <input
+            type="password"
+            id="password"
+            className="w-[90%] h-[30px] mb-2 px-2 border border-gray-300 rounded-lg focus:outline-none text-black transition duration-300 ease-in-out hover:border-[#007BA7]"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+
+          {/* Error Message Display */}
+          {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+          {success && <p className="text-green-500 text-sm mt-2">{success}</p>}
+
+          <button
+            type="submit"
+            className="w-full bg-[#007BA7] text-white py-2 rounded-lg mt-2 hover:bg-[#005f7f] transition duration-300 ease-in-out"
+            onClick={handleSignup}
+          >
+            Submit
+          </button>
+        </div>
+      </main>
+    </>
   );
 };
 
-export default PostPage;
+export default SignupForm;
